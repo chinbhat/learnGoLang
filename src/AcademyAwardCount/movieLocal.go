@@ -19,31 +19,44 @@ func main() {
 		name  string
 		count int
 	}
-	nomineeMap := convertNomineeToMap(fileName)
+	nomineeMap, winnerMap := convertNomineeToMap(fileName)
 
 	if nomineeMap == nil {
 		panic("Error while Parsing CSV File.")
 	}
 
 	var nomineeSlice []movieNomin
+	var winnerSlice []movieNomin
 
 	for k, v := range *nomineeMap {
 		nomineeSlice = append(nomineeSlice, movieNomin{k, v})
+	}
+
+	for k, v := range *winnerMap {
+		winnerSlice = append(winnerSlice, movieNomin{k, v})
 	}
 
 	sort.Slice(nomineeSlice, func(i, j int) bool {
 		return nomineeSlice[i].count > nomineeSlice[j].count
 	})
 
+	sort.Slice(winnerSlice, func(i, j int) bool {
+		return winnerSlice[i].count > winnerSlice[j].count
+	})
+
 	for _, v := range nomineeSlice {
 		if v.count != -1 {
-			fmt.Printf("%v has been nominated %v times, without winning it once\n", v.name, v.count)
+			fmt.Printf("%v has been nominated %v times, without winning Academy Awards once\n", v.name, v.count)
 		}
+	}
+
+	for _, v := range winnerSlice {
+		fmt.Printf("%v has won the academy awards %v times \n", v.name, v.count)
 	}
 
 }
 
-func convertNomineeToMap(csvFileName string) *map[string]int {
+func convertNomineeToMap(csvFileName string) (*map[string]int, *map[string]int) {
 
 	fmt.Println("Inside the function" + csvFileName)
 
@@ -55,6 +68,7 @@ func convertNomineeToMap(csvFileName string) *map[string]int {
 	csvHandler := csv.NewReader(fileHandler)
 
 	nomineeMap := make(map[string]int)
+	winnerMap := make(map[string]int)
 
 	for {
 		csvLine, err := csvHandler.Read()
@@ -70,20 +84,20 @@ func convertNomineeToMap(csvFileName string) *map[string]int {
 
 				name := csvLine[2]
 
-				if nomineeMap[name] != -1 {
-					if csvLine[4] == "NO" {
-
+				if csvLine[4] == "NO" {
+					if nomineeMap[name] != -1 {
 						nomineeMap[name] = nomineeMap[name] + 1
-					} else {
-						nomineeMap[name] = -1
 					}
+				} else {
+					winnerMap[name] = winnerMap[name] + 1
+					nomineeMap[name] = -1
 				}
 
 			}
 
 		}
 	}
-	return &nomineeMap
+	return &nomineeMap, &winnerMap
 
 }
 
